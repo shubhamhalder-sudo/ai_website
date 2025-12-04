@@ -25,7 +25,7 @@ async def root():
 @app.get("/ui", response_class=HTMLResponse)
 async def serve_ui():
     try:
-        with open("front/front2.html", "r", encoding="utf-8") as f:
+        with open("front/front.html", "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         return "<h1>Error: HTML file not found.</h1>"
