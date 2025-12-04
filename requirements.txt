@@ -3,3 +3,4 @@ beautifulsoup4
 aiohttp
 openai
 fastapi[standard]
+gunicorn

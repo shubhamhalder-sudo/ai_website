@@ -1,0 +1,23 @@
+# server_run.py
+import os
+
+def main():
+
+    cmd = [
+        "gunicorn",
+        "server:app",                     # your ASGI/FastAPI app
+        "-k",
+        "uvicorn.workers.UvicornWorker",    
+        "--workers", "2",
+        "--bind", "0.0.0.0:8000",
+        "--keep-alive", "20",
+        "--timeout", "120",  # TTS can be slow
+        "--max-requests", "1000",  # Restart workers to prevent memory leaks
+        "--max-requests-jitter", "100",
+    ]
+
+    # Replace current process with Gunicorn
+    os.execvp(cmd[0], cmd)
+
+if __name__ == "__main__":
+    main()
