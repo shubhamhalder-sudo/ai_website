@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, StreamingResponse
 from agent.functions import AgentFunstions
+from scrape import ScarapeANDSave
 
 app = FastAPI(title="AI Estimator", version="0.0.1")
 
@@ -16,6 +17,7 @@ app.add_middleware(
 
 # Create an instance of the AgentFunstions class
 agent_functions = AgentFunstions()
+scrape_and_save = ScarapeANDSave()
 
 @app.get("/")
 async def root():
@@ -50,6 +52,34 @@ async def query_stream(user_input: str):
         return StreamingResponse(generator, media_type="application/x-ndjson")
     except Exception as e:
         return {"status": -1, "message": str(e), "data": {}}
+    
+
+# Scrape endpoint
+@app.post("/scrape")
+async def scrape(url: str):
+    try:
+        fetch_url_res = await scrape_and_save.fetch_url(url)
+        if fetch_url_res['status'] != 0:
+            raise Exception(fetch_url_res['meassage'])
+
+        soup = fetch_url_res['data']
+
+        extract_semantic_chunks_res = await scrape_and_save.extract_semantic_chunks(soup, url)
+        if extract_semantic_chunks_res['status'] != 0:
+            raise Exception(extract_semantic_chunks_res['message'])
+
+        ids = extract_semantic_chunks_res['data']['ids']
+        docs = extract_semantic_chunks_res['data']['docs']
+        metas = extract_semantic_chunks_res['data']['metas']
+
+        save_chunks_res = await scrape_and_save.save_chunks(ids=ids, docs=docs, metas=metas)
+        if save_chunks_res['status'] != 0:
+            raise Exception(save_chunks_res['message'])
+
+        return {"status": 0, "message": "", "data": {"len": len(ids)}}
+    except Exception as e:
+        return {"status": -1, "message": str(e), "data": {}}
+
 
 
 

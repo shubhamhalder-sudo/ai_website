@@ -4,3 +4,9 @@ aiohttp
 openai
 fastapi[standard]
 gunicorn
+playwright
+
+# sudo apt-get install -y \
+#     libnspr4 \
+#     libnss3 \
+#     libasound2t64

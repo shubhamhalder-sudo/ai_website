@@ -4,6 +4,7 @@ import uuid
 import urllib.parse
 import re
 from bs4 import BeautifulSoup
+from playwright.async_api import async_playwright
 
 
 class ScarapeANDSave:
@@ -11,18 +12,39 @@ class ScarapeANDSave:
         self.chroma_client = chromadb.PersistentClient(path="./vector_db")
         self.collection = self.chroma_client.get_or_create_collection(name="web_chunks",)
 
+    # Fetch url using playwright
     async def fetch_url(self, url):
+        # Try Playwright first
         try:
-            print(f"Fetching {url}...")
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                page = await browser.new_page()
+                try:
+                    await page.goto(url, wait_until="networkidle")
+                    await page.evaluate("window.scrollTo(0, document.body.scrollHeight)") 
+                    await page.wait_for_timeout(30000) 
+                    await page.wait_for_selector("body")
+                    content = await page.content()
+                    soup = BeautifulSoup(content, "html.parser")
+                    return {"status": 0, "data": soup, "meassage": ""}
+                except Exception as e:
+                    error_msg = str(e)
+                finally:
+                    await browser.close()
+        except Exception as e:
+            error_msg = str(e)
+
+        # Fallback to aiohttp if Playwright fails
+        try:
+            print(f"Playwright failed, trying aiohttp: {error_msg}")
             headers = {'User-Agent': 'Mozilla/5.0'}
             async with aiohttp.ClientSession() as session:
-                async with session.get(url, headers=headers) as response:
+                async with session.get(url, headers=headers, ssl=False) as response:
                     text = await response.text()
                     soup = BeautifulSoup(text, "html.parser")
-                    payload = {"status": 0,"data": soup, "meassage": ""}
-                    return payload
-        except aiohttp.ClientError as e:
-            print(f"Error fetching {url}: {e}")
+                    return {"status": 0, "data": soup, "meassage": ""}
+        except Exception as e:
+            print(f"aiohttp also failed: {e}")
             return {"status": -1, "data": None, "meassage": str(e)}
 
     async def extract_site_meta(self, soup):
