@@ -3,13 +3,15 @@ import os
 
 def main():
 
+    port = os.getenv("PORT", "8000")
+
     cmd = [
         "gunicorn",
         "server:app",                     # your ASGI/FastAPI app
         "-k",
         "uvicorn.workers.UvicornWorker",    
         "--workers", "2",
-        "--bind", "0.0.0.0:8000",
+        "--bind", f"0.0.0.0:{port}",
         "--keep-alive", "20",
         "--timeout", "120",  # TTS can be slow
         "--max-requests", "1000",  # Restart workers to prevent memory leaks

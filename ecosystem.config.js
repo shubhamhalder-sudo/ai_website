@@ -5,7 +5,7 @@ module.exports = {
       script: "server_run.py",
       interpreter: "./.venv/bin/python",
       env: {
-        PORT: 8000
+        PORT: 3010
       }
     }
   ]
